@@ -1,0 +1,206 @@
+/**
+ * @fileOverview Firestore Security Rules for "Mis Finanzas al Día" application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model, ensuring that users can only access their own data.
+ *
+ * Data Structure:
+ * All data is nested under /users/{userId}, creating a private data tree for each user.  User profiles, subscriptions, wallets, transactions, categories, goals, and financial tips are stored within this structure.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data.
+ * - Data validation is relaxed in favor of rapid prototyping, except for critical authorization fields.
+ * - `list` operations are only allowed for the owner of the data.
+ *
+ * Denormalization for Authorization:
+ * The UserProfile document is located at `/users/{userId}/profile`, which allows for efficient ownership checks using `isOwner(userId)`.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for all data under /users/{userId}.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user creates their own profile.
+     * @allow (get, list, update, delete) - Authenticated user reads/modifies their own data.
+     * @deny (create, get, list, update, delete) - Any other user attempts to access this data.
+     * @principle Strict user-ownership model.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get, list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update, delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user profile information.
+     * @path /users/{userId}/profile
+     * @allow (create) - Authenticated user creates their own profile, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own profile.
+     * @deny (create, get, update, delete) - Any other user attempts to access this profile.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/profile {
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user subscription information.
+     * @path /users/{userId}/subscriptions/{subscriptionId}
+     * @allow (create) - Authenticated user creates their own subscription, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own subscription.
+     * @deny (create, get, update, delete) - Any other user attempts to access this subscription.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/subscriptions/{subscriptionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user wallet information.
+     * @path /users/{userId}/wallets/{walletId}
+     * @allow (create) - Authenticated user creates their own wallet, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own wallet.
+     * @deny (create, get, update, delete) - Any other user attempts to access this wallet.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/wallets/{walletId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user transaction information.
+     * @path /users/{userId}/transactions/{transactionId}
+     * @allow (create) - Authenticated user creates their own transaction, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own transaction.
+     * @deny (create, get, update, delete) - Any other user attempts to access this transaction.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/transactions/{transactionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user category information.
+     * @path /users/{userId}/categories/{categoryId}
+     * @allow (create) - Authenticated user creates their own category, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own category.
+     * @deny (create, get, update, delete) - Any other user attempts to access this category.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/categories/{categoryId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user goal information.
+     * @path /users/{userId}/goals/{goalId}
+     * @allow (create) - Authenticated user creates their own goal, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own goal.
+     * @deny (create, get, update, delete) - Any other user attempts to access this goal.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/goals/{goalId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Manages user financial tip information.
+     * @path /users/{userId}/financial_tips/{financialTipId}
+     * @allow (create) - Authenticated user creates their own financial tip, validating the user ID.
+     * @allow (get, update, delete) - Authenticated user reads/modifies their own financial tip.
+     * @deny (create, get, update, delete) - Any other user attempts to access this financial tip.
+     * @principle Enforces document ownership and data integrity.
+     */
+    match /users/{userId}/financial_tips/{financialTipId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId) && resource != null;
+      allow delete: if isSignedIn() && isOwner(userId) && resource != null;
+    }
+  }
+}

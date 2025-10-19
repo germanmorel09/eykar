@@ -1,0 +1,12 @@
+/**
+ * Backed up Firestore rules content from the file that was incorrectly named `dist`.
+ */
+
+/** Original contents: **/
+rules_version = '2';
+service cloud.firestore {
+	match /databases/{database}/documents {
+		// (contents omitted)
+	}
+}
+

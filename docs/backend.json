@@ -1,0 +1,451 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile in the Flinzly application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "Reference to the Subscription. (Relationship: UserProfile 1:1 Subscription)"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "User's phone number for OTP login."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        },
+        "country": {
+            "type": "string",
+            "description": "User's country code."
+        },
+        "currency": {
+            "type": "string",
+            "description": "User's preferred currency code."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt"
+      ]
+    },
+    "Subscription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subscription",
+      "type": "object",
+      "description": "Represents a user's subscription status and details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the subscription."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Date when the subscription started.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "Date when the subscription ends.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the subscription (e.g., active, inactive, cancelled)."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the subscription in USD."
+        }
+      },
+      "required": [
+        "id",
+        "startDate",
+        "endDate",
+        "status",
+        "price"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a financial transaction (income or expense).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Transaction)"
+        },
+        "walletId": {
+          "type": "string",
+          "description": "Reference to Wallet. (Relationship: Wallet 1:N Transaction)"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Transaction)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of transaction (income or expense)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the transaction."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the transaction.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the transaction."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "walletId",
+        "categoryId",
+        "type",
+        "amount",
+        "date"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category for classifying transactions.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Category)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of category (income or expense)."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "type"
+      ]
+    },
+    "Wallet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Wallet",
+      "type": "object",
+      "description": "Represents a user's wallet or account (e.g., tarjeta, efectivo, banco).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the wallet."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Wallet)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the wallet."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of wallet (e.g., card, cash, bank)."
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance of the wallet."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the wallet (e.g., USD)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "type",
+        "balance",
+        "currency"
+      ]
+    },
+    "Goal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Goal",
+      "type": "object",
+      "description": "Represents a user's savings goal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the goal."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Goal)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the goal."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Target amount to be saved."
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "Current amount saved towards the goal."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "Start date of the goal.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "End date of the goal.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the goal."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "targetAmount",
+        "currentAmount",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "FinancialTip": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "FinancialTip",
+      "type": "object",
+      "description": "Represents a personalized financial tip generated based on user's spending habits.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the financial tip."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N FinancialTip)"
+        },
+        "tipText": {
+          "type": "string",
+          "description": "The text content of the financial tip."
+        },
+        "dateGenerated": {
+          "type": "string",
+          "description": "Date when the financial tip was generated.",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the financial tip (e.g., savings, budgeting, debt management)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "tipText",
+        "dateGenerated"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. The document ID is the user's UID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/subscriptions/{subscriptionId}",
+        "definition": {
+          "entityName": "Subscription",
+          "schema": {
+            "$ref": "#/backend/entities/Subscription"
+          },
+          "description": "Stores subscription details for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "subscriptionId",
+              "description": "The unique identifier for the subscription."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/wallets/{walletId}",
+        "definition": {
+          "entityName": "Wallet",
+          "schema": {
+            "$ref": "#/backend/entities/Wallet"
+          },
+          "description": "Stores user's wallet information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "walletId",
+              "description": "The unique identifier for the wallet."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores user's transaction history.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores user's transaction categories.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "categoryId",
+              "description": "The unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/goals/{goalId}",
+        "definition": {
+          "entityName": "Goal",
+          "schema": {
+            "$ref": "#/backend/entities/Goal"
+          },
+          "description": "Stores user's financial goals.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "goalId",
+              "description": "The unique identifier for the goal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/financial_tips/{financialTipId}",
+        "definition": {
+          "entityName": "FinancialTip",
+          "schema": {
+            "$ref": "#/backend/entities/FinancialTip"
+          },
+          "description": "Stores personalized financial tips for the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "financialTipId",
+              "description": "The unique identifier for the financial tip."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to provide a secure and scalable solution for the \"Flinzly\" application, adhering to the principles of Authorization Independence, Structural Segregation, Access Modeling, and Data Clarity. Each user has their own private data, which is isolated from other users, fitting the multi-tenant SaaS model. This is achieved by structuring data under user-specific paths (`/users/{userId}`).\n\nAuthorization Independence is ensured by avoiding `get()` calls in security rules. Since the Subscription data is 1:1 with the user profile, the subscription status is checked directly within the user document. This eliminates the need to fetch the Subscription document in security rules.\n\nThe structure uses path-based ownership (`/users/{userId}/...`) for most user-owned data (wallets, transactions, categories, goals, and financial tips). This makes security rules simple and efficient because access control is based on the path.\n\nTo support secure `list` operations (QAPs), data is segregated. Each collection under the user path is homogeneous, ensuring that all documents within a collection share the same security requirements. For example, all documents in `/users/{userId}/transactions` are owned by the user identified by `{userId}`. This allows for simple rules that permit listing documents if `request.auth.uid == userId`."
+  }
+}

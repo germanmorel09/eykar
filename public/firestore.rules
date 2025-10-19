@@ -1,0 +1,155 @@
+/**
+ * @fileoverview Firestore Security Rules for the application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model.  All data (transactions,
+ * wallets, goals) is owned by a specific user, identified by their Firebase
+ * Auth UID.  Users can only read and write their own data. Data validation is minimal for rapid prototyping.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profile information.  The {userId} MUST match
+ *   the authenticated user's UID.
+ * - /transactions/{transactionId}: Stores financial transactions, each with a
+ *   'userId' field indicating ownership.
+ * - /wallets/{walletId}: Stores wallet/account information, each with a
+ *   'userId' field indicating ownership.
+ * - /goals/{goalId}: Stores savings goals, each with a 'userId' field
+ *   indicating ownership.
+ *
+ * Key Security Decisions:
+ * - User listing is explicitly denied.
+ * - All data is private and requires authentication. Public read access is not
+ *   supported in this initial ruleset.
+ *
+ * Denormalization for Authorization:
+ * The 'userId' field is present in the 'transactions', 'wallets', and 'goals'
+ * collections. This denormalization is CRITICAL for efficient security rules.
+ * It allows us to verify ownership without performing expensive `get()` operations.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Rules for the /users collection.  Only the authenticated user can read/write their own profile.
+     * @path /databases/{database}/documents/users/{userId}
+     * @allow (create) User with matching UID can create their profile.
+     * @allow (get) Authenticated user can read their own profile.
+     * @allow (update) Authenticated user can update their own profile.
+     * @allow (delete) Authenticated user can delete their own profile.
+     * @deny (create) User cannot create a profile with a mismatched UID.
+     * @deny (get) User cannot read another user's profile.
+     * @deny (update) User cannot update another user's profile.
+     * @deny (delete) User cannot delete another user's profile.
+     * @principle Enforces document ownership and authenticated access for user profiles.
+     */
+    match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Rules for the /transactions collection. Only the owner can read/write their transactions.
+     * @path /databases/{database}/documents/transactions/{transactionId}
+     * @allow (create) Owner can create a transaction.
+     * @allow (get) Owner can read their transaction.
+     * @allow (update) Owner can update their transaction.
+     * @allow (delete) Owner can delete their transaction.
+     * @deny (create) User cannot create a transaction for another user.
+     * @deny (get) User cannot read another user's transaction.
+     * @deny (update) User cannot update another user's transaction.
+     * @deny (delete) User cannot delete another user's transaction.
+     * @principle Enforces document ownership and authenticated access for transactions.
+     */
+    match /transactions/{transactionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isTransactionOwner() {
+          return resource.data.userId == request.auth.uid;
+       }
+
+
+      allow get: if isSignedIn() && isTransactionOwner();
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isTransactionOwner() && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isTransactionOwner();
+    }
+
+    /**
+     * @description Rules for the /wallets collection. Only the owner can read/write their wallets.
+     * @path /databases/{database}/documents/wallets/{walletId}
+     * @allow (create) Owner can create a wallet.
+     * @allow (get) Owner can read their wallet.
+     * @allow (update) Owner can update their wallet.
+     * @allow (delete) Owner can delete their wallet.
+     * @deny (create) User cannot create a wallet for another user.
+     * @deny (get) User cannot read another user's wallet.
+     * @deny (update) User cannot update another user's wallet.
+     * @deny (delete) User cannot delete another user's wallet.
+     * @principle Enforces document ownership and authenticated access for wallets.
+     */
+    match /wallets/{walletId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+       function isWalletOwner() {
+          return resource.data.userId == request.auth.uid;
+       }
+
+
+      allow get: if isSignedIn() && isWalletOwner();
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isWalletOwner() && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isWalletOwner();
+    }
+
+    /**
+     * @description Rules for the /goals collection. Only the owner can read/write their goals.
+     * @path /databases/{database}/documents/goals/{goalId}
+     * @allow (create) Owner can create a goal.
+     * @allow (get) Owner can read their goal.
+     * @allow (update) Owner can update their goal.
+     * @allow (delete) Owner can delete their goal.
+     * @deny (create) User cannot create a goal for another user.
+     * @deny (get) User cannot read another user's goal.
+     * @deny (update) User cannot update another user's goal.
+     * @deny (delete) User cannot delete another user's goal.
+     * @principle Enforces document ownership and authenticated access for goals.
+     */
+    match /goals/{goalId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+       function isGoalOwner() {
+          return resource.data.userId == request.auth.uid;
+       }
+
+      allow get: if isSignedIn() && isGoalOwner();
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && isGoalOwner() && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && isGoalOwner();
+    }
+  }
+}

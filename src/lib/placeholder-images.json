@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-image",
+      "description": "Mockup del dashboard de la aplicación Flinzly mostrando gráficos y balances en un dispositivo.",
+      "imageUrl": "https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.istockphoto.com%2Fes%2Filustraciones%2Ffinanzas-personales&psig=AOvVaw1ityFz_nhcj0QQ--kOO254&ust=1760792741621000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCICHxqSmq5ADFQAAAAAdAAAAABAE",
+      "imageHint": "app mockup"
+    }
+  ]
+}
