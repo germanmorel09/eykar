@@ -8,6 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase env vars not found: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '');
+export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '', {
+  auth: {
+    persistSession: true
+  },
+  db: {
+    schema: 'public'
+  }
+});
 
 export default supabase;

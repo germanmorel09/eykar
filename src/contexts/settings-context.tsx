@@ -7,7 +7,7 @@ import React, {
   ReactNode,
   useEffect,
 } from 'react';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useFirestore, useDoc, useUser } from '@/firebase';
 
 // Define the shape of your settings
@@ -47,9 +47,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [userProfile]);
 
-  const setSettings = (newSettings: Partial<AppSettings>) => {
-    // In a real app, you'd persist this to the user's profile in Firestore
+  const setSettings = async (newSettings: Partial<AppSettings>) => {
+    if (!user || !firestore) return;
+    
+    // Update local state
     setSettingsState(prevSettings => ({ ...prevSettings, ...newSettings }));
+    
+    // Persist to Firestore
+    try {
+      const docRef = doc(firestore, `users/${user.uid}`);
+      await setDoc(docRef, {
+        ...userProfile,
+        ...newSettings
+      }, { merge: true });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
   };
 
   const formatCurrency = (amount: number) => {
