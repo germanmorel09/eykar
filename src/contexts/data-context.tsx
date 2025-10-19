@@ -101,18 +101,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function ensureDefaults() {
       if (!user) return;
-      const { data } = await supabase
-        .from('categories')
-        .select('id')
-        .eq('userId', user.id)
-        .limit(1);
-      if (data && data.length === 0) {
-        const toInsert = categoryDefaults.map(cat => ({ ...cat, userId: user.id }));
-        await supabase.from('categories').insert(toInsert);
+      try {
+        // Verificar si ya existen categorías
+        const { data: existingData, error: checkError } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('userId', user.id)
+          .limit(1);
+          
+        if (checkError) throw checkError;
+
+        // Si no hay categorías, crear las predeterminadas
+        if (!existingData || existingData.length === 0) {
+          const toInsert = categoryDefaults.map(cat => ({ ...cat, userId: user.id }));
+          const { data: insertedData, error: insertError } = await supabase
+            .from('categories')
+            .insert(toInsert)
+            .select();
+            
+          if (insertError) throw insertError;
+          if (insertedData) {
+            setRawCategories(insertedData);
+            toast({
+              title: 'Categorías creadas',
+              description: 'Se han creado las categorías predeterminadas.'
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error('Error creating default categories:', error);
+        toast({ 
+          variant: 'destructive', 
+          title: 'Error al crear categorías', 
+          description: 'No se pudieron crear las categorías predeterminadas.' 
+        });
       }
     }
     ensureDefaults();
-  }, [user]);
+  }, [user, toast]);
 
   const categories = rawCategories.map(c => ({
       ...c,
@@ -183,17 +209,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }).subscribe();
 
     const cChannel = supabase.channel('realtime-categories')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories', filter: `userId=eq.${user.id}` }, (payload) => {
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'categories', 
+        filter: `userId=eq.${user.id}` 
+      }, (payload) => {
+        console.log('Category change received:', payload); // Para debug
         const newRow = payload.new as Category | null;
         const oldRow = payload.old as Category | null;
+        
         if (payload.eventType === 'INSERT' && newRow) {
-          setRawCategories(prev => [newRow, ...prev]);
+          setRawCategories(prev => {
+            const exists = prev.some(p => p.id === newRow.id);
+            return exists ? prev : [newRow, ...prev];
+          });
         } else if (payload.eventType === 'UPDATE' && newRow) {
           setRawCategories(prev => prev.map(p => p.id === newRow.id ? newRow : p));
         } else if (payload.eventType === 'DELETE' && oldRow) {
           setRawCategories(prev => prev.filter(p => p.id !== oldRow.id));
         }
-      }).subscribe();
+      })
+      .subscribe((status) => {
+        console.log('Categories subscription status:', status); // Para debug
+      });
 
     const gChannel = supabase.channel('realtime-goals')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'goals', filter: `userId=eq.${user.id}` }, (payload) => {
@@ -250,8 +289,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addCategory = useCallback(async (category: Omit<Category, 'id' | 'iconName' | 'color' | 'userId'>) => {
     if (!user) return;
-    await supabase.from('categories').insert([{ ...category, iconName: 'default', color: getRandomColor(), userId: user.id }]);
-  }, [user]);
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([{ 
+          ...category, 
+          iconName: category.type === 'income' ? 'PlusCircle' : 'ShoppingCart', 
+          color: getRandomColor(), 
+          userId: user.id 
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      if (data) setRawCategories(prev => [data, ...prev]);
+      
+      toast({
+        title: 'Categoría creada',
+        description: `La categoría "${category.name}" ha sido creada exitosamente.`
+      });
+    } catch (error: any) {
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error al crear categoría', 
+        description: error.message 
+      });
+    }
+  }, [user, toast]);
 
   const deleteCategory = useCallback(async (categoryId: string) => {
     if (!user) return;
