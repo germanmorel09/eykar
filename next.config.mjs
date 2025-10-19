@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Output as a static export so `next build` generates a static site
-  output: 'export',
   images: {
     remotePatterns: [
       {
@@ -12,4 +10,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
