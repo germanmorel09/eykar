@@ -4,18 +4,21 @@ import React, {
   createContext,
   useContext,
   useState,
-  ReactNode,
   useEffect,
+  ReactNode,
 } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
-import { useFirestore, useDoc, useUser } from '@/firebase';
+import { createClient } from '@supabase/supabase-js';
 
-// Define the shape of your settings
+// ✅ Configurar Supabase
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Tipos
 interface AppSettings {
   currency: string;
 }
 
-// Define the context shape
 interface SettingsContextType {
   settings: AppSettings;
   setSettings: (settings: Partial<AppSettings>) => void;
@@ -23,45 +26,66 @@ interface SettingsContextType {
   isSettingsLoading: boolean;
 }
 
-// Create the context with a default value
+// Crear contexto
 const SettingsContext = createContext<SettingsContextType | undefined>(
   undefined
 );
 
-// Create a provider component
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<AppSettings>({
-    currency: 'USD', // Default currency
+    currency: 'USD',
   });
-  const { user } = useUser();
-  const firestore = useFirestore();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userProfileDocRef =
-    user && firestore ? doc(firestore, `users/${user.uid}`) : null;
-
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileDocRef);
-
+  // 🔹 Cargar configuración desde localStorage o Supabase
   useEffect(() => {
-    if (userProfile && userProfile.currency) {
-      setSettingsState(prev => ({ ...prev, currency: userProfile.currency }));
-    }
-  }, [userProfile]);
+    const loadSettings = async () => {
+      // 1️⃣ Intentar desde localStorage
+      const savedCurrency = localStorage.getItem('currency');
+      if (savedCurrency) {
+        setSettingsState({ currency: savedCurrency });
+        setIsLoading(false);
+        return;
+      }
 
+      // 2️⃣ (Opcional) Cargar desde Supabase si el usuario está logueado
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('currency')
+          .eq('id', userData.user.id)
+          .single();
+        if (!error && data?.currency) {
+          setSettingsState({ currency: data.currency });
+          localStorage.setItem('currency', data.currency);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    loadSettings();
+  }, []);
+
+  // 🔹 Actualizar configuración (local + Supabase)
   const setSettings = async (newSettings: Partial<AppSettings>) => {
-    if (!user || !firestore) return;
-    
-    // Update local state
-    setSettingsState(prevSettings => ({ ...prevSettings, ...newSettings }));
-    
-    // Persist to Firestore
-    try {
-      const docRef = doc(firestore, `users/${user.uid}`);
-      await setDoc(docRef, {
-        ...userProfile,
-        ...newSettings
-      }, { merge: true });
-    } catch (error) {
-      console.error('Error saving settings:', error);
+    const updated = { ...settings, ...newSettings };
+    setSettingsState(updated);
+
+    if (newSettings.currency) {
+      localStorage.setItem('currency', newSettings.currency);
+    }
+
+    // Guardar también en Supabase si el usuario está logueado
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData?.user) {
+      await supabase
+        .from('users')
+        .upsert({
+          id: userData.user.id,
+          currency: updated.currency,
+        });
     }
   };
 
@@ -71,8 +95,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         style: 'currency',
         currency: settings.currency,
       }).format(amount);
-    } catch (e) {
-      // Fallback for invalid currency
+    } catch {
       return new Intl.NumberFormat('es-ES', {
         style: 'currency',
         currency: 'USD',
@@ -84,7 +107,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     settings,
     setSettings,
     formatCurrency,
-    isSettingsLoading: isProfileLoading,
+    isSettingsLoading: isLoading,
   };
 
   return (
@@ -94,10 +117,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Create a custom hook to use the settings context
+// Hook para usar el contexto
 export function useSettings() {
   const context = useContext(SettingsContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useSettings must be used within a SettingsProvider');
   }
   return context;
